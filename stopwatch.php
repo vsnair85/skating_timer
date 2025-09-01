@@ -1,5 +1,6 @@
 <?php
 require 'script/db.php';
+require 'script/auth.php';
 $racer_id = isset($_GET['racer_id']) ? (int)$_GET['racer_id'] : 0;
 
 $stmt = $mysqli->prepare("SELECT tr_id, tr_name, tr_number FROM tbl_racers WHERE tr_id=? LIMIT 1");

@@ -1,5 +1,6 @@
 <?php
 require 'script/db.php';
+require 'script/auth.php'; 
 
 // Get racers for dropdown
 $racers = [];

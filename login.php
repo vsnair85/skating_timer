@@ -1,19 +1,14 @@
-<?php 
-require 'script/db.php';
-require 'script/auth.php'; 
-?>
 <!doctype html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Select Racer</title>
+    <title>Login • Speed Skating</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
             --sky: #52b6ff;
-            --sky-2: #a8dbff;
         }
 
         body {
@@ -23,8 +18,8 @@ require 'script/auth.php';
         }
 
         .card-mobile {
-            max-width: 520px;
-            margin: clamp(8px, 4vw, 24px) auto;
+            max-width: 420px;
+            margin: clamp(12px, 5vw, 32px) auto;
             border: none;
             border-radius: 18px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
@@ -48,57 +43,46 @@ require 'script/auth.php';
             transform: scale(.98);
         }
 
-        .form-select {
+        .form-control {
             border-radius: 12px;
         }
 
-        @media (min-width:576px) {
-            body {
-                background: radial-gradient(60% 50% at 50% 0%, var(--sky) 0%, #fff 70%);
-            }
+        .muted {
+            color: #6b7280;
         }
     </style>
 </head>
 
 <body>
     <div class="brand h3">Speed Skating Stopwatch</div>
+
     <div class="card card-mobile">
-        <div class="card-body p-3 p-sm-4">
-            <h5 class="mb-3 text-center">Select Racer</h5>
-            <?php
-            $racers = [];
-            if ($rs = $mysqli->query("SELECT tr_id,tr_name,tr_number FROM tbl_racers ORDER BY tr_name")) {
-                while ($row = $rs->fetch_assoc()) $racers[] = $row;
-                $rs->free();
-            }
-            ?>
-            <form action="stopwatch.php" method="get" class="needs-validation" novalidate>
+        <div class="card-body p-4">
+            <h5 class="mb-3 text-center">Login</h5>
+
+            <form method="post" class="needs-validation" action="script/login_action.php" novalidate>
+                <input type="hidden" name="next" value="<?= htmlspecialchars($next) ?>">
                 <div class="mb-3">
-                    <label class="form-label">Racer</label>
-                    <select class="form-select" name="racer_id" required>
-                        <option value="">Choose...</option>
-                        <?php foreach ($racers as $r): ?>
-                            <option value="<?= (int)$r['tr_id'] ?>">
-                                <?= htmlspecialchars($r['tr_name']) ?><?= $r['tr_number'] ? ' — #' . htmlspecialchars($r['tr_number']) : '' ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <div class="invalid-feedback">Please select a racer.</div>
+                    <label class="form-label">Mobile Number</label>
+                    <input type="text" class="form-control" name="mobile"
+                        pattern="\d{10}" maxlength="10" required autofocus>
+                    <div class="invalid-feedback">Please enter a 10-digit mobile number.</div>
                 </div>
-                <div class="d-grid gap-2 mt-4">
-                    <button class="btn btn-sky btn-lg" type="submit">Next</button>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" name="password" required>
+                    <div class="invalid-feedback">Enter password.</div>
+                </div>
+                <div class="d-grid">
+                    <button class="btn btn-sky btn-lg" type="submit">Sign in</button>
                 </div>
             </form>
 
-            <hr class="my-4">
-
-            <div class="d-grid mt-2">
-                <a class="btn btn-outline-primary" href="reports.php">View Racer Reports</a>
+            <div class="small text-center mt-3 muted">
+                Tip: Enter 10 digit mobile number.
             </div>
-
         </div>
     </div>
-
     <script>
         (() => {
             const forms = document.querySelectorAll('.needs-validation');
@@ -113,6 +97,7 @@ require 'script/auth.php';
             });
         })();
     </script>
+
 </body>
 
 </html>

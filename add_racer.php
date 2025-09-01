@@ -1,4 +1,7 @@
-<?php require 'script/db.php'; ?>
+<?php 
+require 'script/db.php';
+require 'script/auth.php'; 
+?>
 <!doctype html>
 <html lang="en">
 <head>
