@@ -95,6 +95,9 @@ require 'script/auth.php';
             <div class="d-grid mt-2">
                 <a class="btn btn-outline-primary" href="reports.php">View Racer Reports</a>
             </div>
+            <div class="d-grid mt-2">
+                <a class="btn btn-outline-secondary" href="attendance">Attendance</a>
+            </div>
 
         </div>
     </div>

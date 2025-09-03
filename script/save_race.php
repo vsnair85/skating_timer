@@ -26,14 +26,17 @@ try {
   }
   if (!$exists) throw new Exception('Racer not found');
 
-  // ISO -> 'Y-m-d H:i:s.v' (trim to milliseconds)
-  function iso_to_mysql_ms($iso) {
+  // ISO -> 'Y-m-d H:i:s.v' (trim to milliseconds), convert to IST
+  function iso_to_mysql_ms($iso)
+  {
     if (!$iso) return null;
-    $dt = new DateTime($iso);
+    $dt = new DateTime($iso, new DateTimeZone("UTC")); // input is ISO, assume UTC
+    $dt->setTimezone(new DateTimeZone("Asia/Kolkata")); // convert to IST
     // MySQL DATETIME(3) style string
-    $ms = (int)floor(((int)$dt->format('u'))/1000); // micro -> milli
+    $ms = (int)floor(((int)$dt->format('u')) / 1000); // micro -> milli
     return $dt->format('Y-m-d H:i:s') . '.' . str_pad((string)$ms, 3, '0', STR_PAD_LEFT);
   }
+
 
   $started_at  = $started_iso  ? iso_to_mysql_ms($started_iso)  : null;
   $finished_at = $finished_iso ? iso_to_mysql_ms($finished_iso) : null;
