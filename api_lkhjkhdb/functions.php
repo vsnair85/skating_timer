@@ -226,6 +226,99 @@ class skatingApi
 		return array_values($races);
 	}
 
+	function attendanceReport($racerid)
+	{
+		$data = [];
+
+		// 1. Racer basic info + first attendance + total practice time
+		$sql1 = "
+        SELECT 
+            r.tr_id,
+            r.tr_name,
+            MIN(a.ta_chkd_in_at) AS first_attendance_date,
+            SEC_TO_TIME(
+              SUM(
+                TIMESTAMPDIFF(
+                  SECOND,
+                  a.ta_chkd_in_at,
+                  COALESCE(a.ta_chkd_out_at, DATE_ADD(a.ta_chkd_in_at, INTERVAL 2 HOUR))
+                )
+              )
+            ) AS total_practice_time
+        FROM tbl_racers r
+        LEFT JOIN tbl_attendance a ON a.ta_racer_id = r.tr_id
+        WHERE r.tr_id = ?
+        GROUP BY r.tr_id, r.tr_name
+    ";
+
+		$stmt = mysqli_prepare($this->db, $sql1);
+		mysqli_stmt_bind_param($stmt, "i", $racerid);
+		mysqli_stmt_execute($stmt);
+		$res = mysqli_stmt_get_result($stmt);
+		$data = mysqli_fetch_assoc($res) ?: [];
+		mysqli_stmt_close($stmt);
+
+		// if no racer row, return false immediately
+		if (empty($data)) {
+			return false;
+		}
+
+		// 2. Days attended (by year)
+		$sql2 = "
+        SELECT YEAR(ta_chkd_in_at) AS year,
+               COUNT(DISTINCT DATE(ta_chkd_in_at)) AS days_attended
+        FROM tbl_attendance
+        WHERE ta_racer_id = ?
+        GROUP BY YEAR(ta_chkd_in_at)
+        ORDER BY year
+    ";
+		$stmt = mysqli_prepare($this->db, $sql2);
+		mysqli_stmt_bind_param($stmt, "i", $racerid);
+		mysqli_stmt_execute($stmt);
+		$res = mysqli_stmt_get_result($stmt);
+		$daysByYear = [];
+		while ($row = mysqli_fetch_assoc($res)) {
+			$daysByYear[$row['year']] = (int)$row['days_attended'];
+		}
+		$data['days_attended_by_year'] = $daysByYear;
+		mysqli_stmt_close($stmt);
+
+		// 3. Dates attended (year → month → dates[])
+		$sql3 = "
+        SELECT YEAR(ta_chkd_in_at) AS year,
+               LPAD(MONTH(ta_chkd_in_at), 2, '0') AS month,
+               DATE(ta_chkd_in_at) AS day
+        FROM tbl_attendance
+        WHERE ta_racer_id = ?
+        GROUP BY YEAR(ta_chkd_in_at), MONTH(ta_chkd_in_at), DATE(ta_chkd_in_at)
+        ORDER BY year, month, day
+    ";
+		$stmt = mysqli_prepare($this->db, $sql3);
+		mysqli_stmt_bind_param($stmt, "i", $racerid);
+		mysqli_stmt_execute($stmt);
+		$res = mysqli_stmt_get_result($stmt);
+		$datesYMD = [];
+		while ($row = mysqli_fetch_assoc($res)) {
+			$y = $row['year'];
+			$m = $row['month'];
+			$d = $row['day'];
+			if (!isset($datesYMD[$y])) $datesYMD[$y] = [];
+			if (!isset($datesYMD[$y][$m])) $datesYMD[$y][$m] = [];
+			$datesYMD[$y][$m][] = $d;
+		}
+		$data['dates_attended_year_month'] = $datesYMD;
+		mysqli_stmt_close($stmt);
+
+		// If the racer has no attendance at all, first_attendance_date will be null
+		// You can decide: return false or still return racer info with empty stats.
+		if (empty($data['first_attendance_date'])) {
+			return false;
+		}
+
+		return $data;
+	}
+
+
 	public function racerFaceExists(int $userId, string $racerName): ?array
 	{
 		$sql = "SELECT tr_id, tr_image_path
